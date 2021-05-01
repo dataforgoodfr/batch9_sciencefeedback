@@ -1,0 +1,63 @@
+version: '3.2'
+
+services:
+  certbot-serve-ssl:
+    container_name: ${APP_NAME}-certbot-serve-ssl
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    image: certbot/certbot
+    volumes:
+      - ./docker_data_serve-ssl/certbot/conf:/etc/letsencrypt
+      - ./docker_data_serve-ssl/certbot/www:/var/www/certbot
+
+  jupyter-serve-ssl:
+    build:
+      context: ./api
+      dockerfile: ../jupyter/Dockerfile
+    command: >
+      bash -c "start-notebook.sh --NotebookApp.base_url='/jupyter' \
+                                 --NotebookApp.token='${JUPYTER_TOKEN}';"
+    container_name: ${APP_NAME}-jupyter-serve-ssl
+    networks:
+      - nginx_serve-ssl_nw
+    volumes:
+      - ./api:/opt/api
+      - ./jupyter/work:/home/jovyan/work
+
+  nginx-serve-ssl:
+    build:
+      args:
+        - COMPOSITION=serve-ssl
+        - INFRA_HTPASSWD=$INFRA_HTPASSWD
+        - SERVER_NAME=${DATA_SUBDOMAIN}.${APP_NAME}.${TLD}
+      context: ./nginx
+      dockerfile: ./Dockerfile.serve-ssl
+    command: |
+      bash -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
+    container_name: ${APP_NAME}-nginx-serve-ssl
+    depends_on:
+      - torchserve-serve-ssl
+    networks:
+      - nginx_serve-ssl_nw
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - ./docker_data_serve-ssl/certbot/conf:/etc/letsencrypt
+      - ./docker_data_serve-ssl/certbot/www:/var/www/certbot
+
+  torchserve-serve-ssl:
+    build:
+      context: ./torchserve
+    command: torchserve --start --model-store model-store --models stsbrobertabase.mar --ncs
+    container_name: ${APP_NAME}-torchserve-serve-ssl
+    networks:
+      - nginx_serve-ssl_nw
+
+
+networks:
+  nginx_serve-ssl_nw:
+    driver: bridge
+
+volumes:
+  docker_data_serve-ssl:
