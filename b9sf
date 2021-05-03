@@ -49,9 +49,9 @@ APIWEB_CONTAINER=${APP_NAME}-apiweb-$COMPOSITION
 CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
 CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
 if [[ "$ENV" == "production" ]]; then
-  SSL_SERVER_NAME=SSL.${APP_NAME}.$TLD
+  SSL_SERVER_NAME=${SSL_SUBDOMAIN_NAME}.${SSL_DOMAIN_NAME}.$TLD
 else
-  SSL_SERVER_NAME=SSL-${ENV}.${APP_NAME}.$TLD
+  SSL_SERVER_NAME=${SSL_SUBDOMAIN_NAME}-${ENV}.${SSL_DOMAIN_NAME}.$TLD
 fi
 SSL_USER=${SSL_USER:-foo}
 SSL_LOGIN="$SSL_USER@$SSL_SERVER_NAME"
@@ -61,27 +61,18 @@ SERVICE_CONTAINER=${APP_NAME}-${SERVICE}-$COMPOSITION
 # Local commands : use Docker
 # =============================================
 
-# Connect to API container
+# Bash to containers
 if [[ "$CMD" == "bash" ]]; then
-
   SUB_COMMANDS=${*:1}
-	if [[ "$ENV" == "not-set" && "$PLATFORM" == "not-set" ]]; then
-    if [[ "$SERVICE" == "not-set" ]]; then
-      exit_with_error "You need to specify a service with option -s."
-    fi
-    check start $SERVICE
-    if [ -z "$SUB_COMMANDS" ]; then
-      docker exec -it $SERVICE_CONTAINER bash
-    else
-      docker exec -it $SERVICE_CONTAINER bash -c "$SUB_COMMANDS"
-    fi
-	elif [ "$ENV" != "not-set" ]; then
-    if [[ "$PLATFORM" == "not-set" ]]; then
-      exit_with_error "Error: You need to define which platform to bash (-p api)"
-    elif [[ "$PLATFORM" == 'SSL' ]]; then
-      echo $SSL_LOGIN
-      ssh -t $SSL_LOGIN $SUB_COMMANDS
-    fi
+  ensure_development
+  if [[ "$SERVICE" == "not-set" ]]; then
+    exit_with_error "You need to specify a service with option -s."
+  fi
+  check start $SERVICE
+  if [ -z "$SUB_COMMANDS" ]; then
+    docker exec -it $SERVICE_CONTAINER bash
+  else
+    docker exec -it $SERVICE_CONTAINER bash -c "$SUB_COMMANDS"
   fi
   exit_with_success
 
@@ -134,6 +125,17 @@ elif [[ "$CMD" == "reup" ]]; then
   docker-compose -f docker-compose.$COMPOSITION.yml down
   docker-compose -f docker-compose.$COMPOSITION.yml up --force-recreate $(containers_from_names $*)
   exit_with_success
+
+
+# Ssh to platform
+elif [[ "$CMD" == "ssh" ]]; then
+  ensure_remote
+  SUB_COMMANDS=$*
+  if [ -z "$SUB_COMMANDS" ]; then
+    ssh -t $SSL_LOGIN
+  else
+    ssh -t $SSL_LOGIN $SUB_COMMANDS
+  fi
 
 
 # Start docker-compose up with additional commands given the mode
@@ -251,37 +253,36 @@ elif [[ "$CMD" == "version" ]]; then
 
 # Install new local environment
 elif [[ "$CMD" == "install" ]]; then
-  if [[ "$PLATFORM" == "localhost" ]]; then
-    cd $ROOT_PATH/webapp
-  	yarn
-  elif [[ "$PLATFORM" == "SSL" ]]; then
-    cd $ROOT_PATH
-    echo "### Transfer install file into the server..."
-    scp $ROOT_PATH/scripts/SSL/install_init.sh $SSL_LOGIN:/home/$SSL_USER
-    scp $ROOT_PATH/.env.${PLATFORM}.${ENV} $SSL_LOGIN:/home/${SSL_USER}/.env
-    echo
-    echo "### Write install file..."
-    SCRIPT="
-      #!/usr/bin/env bash
-      cd /home/$SSL_USER;
-      chmod +x ./install_init.sh;
-      ./install_init.sh;
-      echo \"### Clone repository...\";
-      rm -rf $APP_NAME-main;
-      git clone -b $ENV https://$REPOSITORIES_NAME.com/${MAIN_REPOSITORY_SLUG}/$APP_NAME;
-      echo;
-      cd /home/$SSL_USER/$APP_NAME-main;
-      mv /home/$SSL_USER/.env /home/$SSL_USER/$APP_NAME-main;
-      bash ./scripts/SSL/install_dockercompose.sh;
-      bash ./scripts/SSL/install_torchserve.sh;
-      bash ./scripts/SSL/install_letsencrypt.sh;
-    "
-    ssh -t $SSL_LOGIN "
-      rm -f /home/$SSL_USER/install_serve-ssl.sh;
-      echo \"$SCRIPT\" >> /home/$SSL_USER/install_serve-ssl.sh;
-      sudo sh /home/$SSL_USER/install_serve-ssl.sh;
-    "
+  if [[ "$ENV" != "production" ]]; then
+    exit_with_error "can only install when env is production"
   fi
+  cd $ROOT_PATH
+  echo "### Transfer install file into the server..."
+  scp $ROOT_PATH/scripts/SSL/install_init.sh $SSL_LOGIN:/home/$SSL_USER
+  scp $ROOT_PATH/.env.ssl
+  .${ENV} $SSL_LOGIN:/home/${SSL_USER}/.env
+  echo
+  echo "### Write install file..."
+  SCRIPT="
+    #!/usr/bin/env bash
+    cd /home/$SSL_USER;
+    chmod +x ./install_init.sh;
+    ./install_init.sh;
+    echo \"### Clone repository...\";
+    rm -rf $APP_NAME-main;
+    git clone -b $ENV https://$REPOSITORIES_NAME.com/${MAIN_REPOSITORY_SLUG}/$APP_NAME;
+    echo;
+    cd /home/$SSL_USER/$APP_NAME-main;
+    mv /home/$SSL_USER/.env /home/$SSL_USER/$APP_NAME-main;
+    bash ./scripts/SSL/install_dockercompose.sh;
+    bash ./scripts/SSL/install_torchserve.sh;
+    bash ./scripts/SSL/install_letsencrypt.sh;
+  "
+  ssh -t $SSL_LOGIN "
+    rm -f /home/$SSL_USER/install_serve-ssl.sh;
+    echo \"$SCRIPT\" >> /home/$SSL_USER/install_serve-ssl.sh;
+    sudo sh /home/$SSL_USER/install_serve-ssl.sh;
+  "
   exit_with_success
 
 
@@ -301,7 +302,7 @@ else
     CMD="shell"
     INTERACTIVE_COMPOSITION='-it'
   fi
-  if [[ "$ENV" == "not-set" ]]; then
+  if [[ "$ENV" == "development" ]]; then
     check start apiweb
     if [[ "$ARG" == "interactive" ]]; then
       INTERACTIVE_COMPOSITION='-it'
