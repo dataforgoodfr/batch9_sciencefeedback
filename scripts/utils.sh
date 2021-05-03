@@ -41,10 +41,16 @@ function containers_from_names {
 }
 
 
+function ensure_development {
+  if [[ "$ENV" != "development" ]] & [[ "$ENV" != "not-set" ]]; then
+    exit_with_error "${1:-can only be executed in development}."
+  fi
+}
+
+
 function ensure_remote {
-  if [[ "$ENV" == "not-set" ]]; then
-    echo "$1"
-    exit 3
+  if [[ "$ENV" == "not-set" ]] | [[ "$ENV" == "development" ]]; then
+    exit_with_error "${1:-can only be executed in remote (like production)}."
   fi
 }
 
