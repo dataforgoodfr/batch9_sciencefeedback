@@ -30,7 +30,7 @@ services:
         - INFRA_HTPASSWD=$INFRA_HTPASSWD
         - SERVER_NAME=${DATA_SUBDOMAIN}.${APP_NAME}.${TLD}
       context: ./nginx
-      dockerfile: ./Dockerfile.serve-ssl
+      dockerfile: ./Dockerfile.ssl
     command: |
       bash -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\""
     container_name: ${APP_NAME}-nginx-serve-ssl
