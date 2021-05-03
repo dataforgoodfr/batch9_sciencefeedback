@@ -1,0 +1,78 @@
+version: '3.2'
+
+services:
+  apiweb-serve-development:
+    build: api
+    command: >
+      bash -c "set -x;
+               cd /opt/api;
+               while true; do python app.py; done;"
+    container_name: ${APP_NAME}-apiweb-serve-development
+    environment: &api_env
+      - APP_NAME=$APP_NAME
+      - COMMAND_NAME=$COMMAND_NAME
+      - COMPOSITION=serve-development
+      - FLASK_SECRET=$FLASK_SECRET
+      - MACHINE_ENV=development
+      - NLPDATA_INFRA_HTPASSWD=$NLPDATA_INFRA_HTPASSWD
+      - TLD=$TLD
+      - TORCHSERVE_URL=$TORCHSERVE_URL
+    image: ${APP_NAME}${TLD}/api:1.0
+    networks:
+      - nginx_serve-development_nw
+      - torchserve_serve-development_nw
+    volumes:
+      - ./api:/opt/api
+      - /opt/api/tmp
+
+  jupyter-serve-development:
+    build:
+      context: ./api
+      dockerfile: ../jupyter/Dockerfile
+    command: >
+      bash -c "start-notebook.sh --NotebookApp.base_url='/jupyter' \
+                                 --NotebookApp.token='${JUPYTER_TOKEN}';"
+    container_name: ${APP_NAME}-jupyter-serve-development
+    environment: *api_env
+    networks:
+      - nginx_serve-development_nw
+    volumes:
+      - ./api:/opt/api
+      - ./jupyter/work:/home/jovyan/work
+
+  nginx-serve-development:
+    build:
+      args:
+        - COMPOSITION=serve-development
+      context: ./nginx
+      dockerfile: ./Dockerfile.nossl
+    container_name: ${APP_NAME}-nginx-serve-development
+    depends_on:
+      - apiweb-serve-development
+    networks:
+      - nginx_serve-development_nw
+    ports:
+      - 80:80
+
+  torchserve-serve-development:
+    command: ${TORCHSERVE_CMD:-'torchserve --start --model-store model-store --models stsbrobertabase.mar --ncs'}
+    build:
+      context: ./torchserve
+    container_name: ${APP_NAME}-torchserve-serve-development
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2g
+    env_file: .env
+    networks:
+      - torchserve_serve-development_nw
+
+networks:
+  nginx_serve-development_nw:
+    driver: bridge
+  torchserve_serve-development_nw:
+    driver: bridge
+
+volumes:
+  docker_data_serve-development:

@@ -1,0 +1,6 @@
+argh==0.26.2
+matplotlib==3.3.3
+pytest==4.0.0
+pytest-flask==0.14.0
+pytest-mock==1.10.0
+watchdog==0.10.3

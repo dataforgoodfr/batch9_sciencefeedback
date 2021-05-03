@@ -1,0 +1,318 @@
+#!/bin/bash
+
+set -o nounset
+
+# =============================================
+#  Global config of the application
+# =============================================
+
+PRG="$BASH_SOURCE"
+while [ -h "$PRG" ] ; do
+  ls=$(ls -ld "$PRG")
+  link=$(expr "$ls" : '.*-> \(.*\)$')
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=$(dirname "$PRG")"/$link"
+  fi
+done
+
+ROOT_PATH="."
+if [ -x "$(command -v realpath)" ]; then
+  ROOT_PATH=$(realpath "$(dirname "$PRG")")
+fi
+cd $ROOT_PATH
+
+
+set -o allexport
+if [[ -f $ROOT_PATH/.env ]]; then
+  source $ROOT_PATH/.env
+fi
+source $ROOT_PATH/scripts/params.sh
+source $ROOT_PATH/scripts/utils.sh
+source $ROOT_PATH/scripts/configure.sh
+set +o allexport
+
+if [[ $# -eq 0 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  echo_help
+fi
+
+CMD="$1"
+shift
+
+
+# =============================================
+# Set variables for env
+# =============================================
+
+APIWEB_CONTAINER=${APP_NAME}-apiweb-$COMPOSITION
+CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
+CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
+if [[ "$ENV" == "production" ]]; then
+  SSL_SERVER_NAME=SSL.${APP_NAME}.$TLD
+else
+  SSL_SERVER_NAME=SSL-${ENV}.${APP_NAME}.$TLD
+fi
+SSL_USER=${SSL_USER:-foo}
+SSL_LOGIN="$SSL_USER@$SSL_SERVER_NAME"
+SERVICE_CONTAINER=${APP_NAME}-${SERVICE}-$COMPOSITION
+
+# =============================================
+# Local commands : use Docker
+# =============================================
+
+# Connect to API container
+if [[ "$CMD" == "bash" ]]; then
+
+  SUB_COMMANDS=${*:1}
+	if [[ "$ENV" == "not-set" && "$PLATFORM" == "not-set" ]]; then
+    if [[ "$SERVICE" == "not-set" ]]; then
+      exit_with_error "You need to specify a service with option -s."
+    fi
+    check start $SERVICE
+    if [ -z "$SUB_COMMANDS" ]; then
+      docker exec -it $SERVICE_CONTAINER bash
+    else
+      docker exec -it $SERVICE_CONTAINER bash -c "$SUB_COMMANDS"
+    fi
+	elif [ "$ENV" != "not-set" ]; then
+    if [[ "$PLATFORM" == "not-set" ]]; then
+      exit_with_error "Error: You need to define which platform to bash (-p api)"
+    elif [[ "$PLATFORM" == 'SSL' ]]; then
+      echo $SSL_LOGIN
+      ssh -t $SSL_LOGIN $SUB_COMMANDS
+    fi
+  fi
+  exit_with_success
+
+
+# Build the docker images
+elif [[ "$CMD" == "build" ]]; then
+  docker-compose -f docker-compose.$COMPOSITION.yml build $(containers_from_names $*)
+  exit_with_success
+
+
+# Dump database into pgdump file
+elif [[ "$CMD" == "env" ]]; then
+  cat $ROOT_PATH/.env
+  echo ""
+  while read $PARAM_FIELDS; do
+    echo "$name=$(eval echo \$$name)"
+  done < $ROOT_PATH/params.txt
+  exit_with_success
+
+
+# Kill ALL docker containersy/
+elif [[ "$CMD" == "kill-all-containers" ]]; then
+  confirm "Warning: all your docker containers are going to be killed ?"
+  docker kill $(docker ps -q)
+  exit_with_success
+
+
+# Pull and build the docker images from no cache
+elif [[ "$CMD" == "rebuild" ]]; then
+  cd $ROOT_PATH
+  docker-compose -f docker-compose.$COMPOSITION.yml pull apipostgresdb-$COMPOSITION
+  docker-compose -f docker-compose.$COMPOSITION.yml build --no-cache $(containers_from_names $*)
+  exit_with_success
+
+
+# Deambiguate shell command
+elif [[ "$CMD" == "shell" ]]; then
+  exit_with_error "shell command is ambiguous either choose \`$COMMAND_NAME bash\` or \`$COMMAND_NAME python\`."
+
+
+# Restart with forcing recreation and unmounting volumes
+elif [[ "$CMD" == "restart" ]]; then
+  docker-compose -f docker-compose.$COMPOSITION.yml down
+  bash scripts/start_$COMPOSITION.sh  --force-recreate $(containers_from_names $*)
+  exit_with_success
+
+
+# Start docker-compose up with adapted env variables or webapps with local env
+elif [[ "$CMD" == "reup" ]]; then
+  docker-compose -f docker-compose.$COMPOSITION.yml down
+  docker-compose -f docker-compose.$COMPOSITION.yml up --force-recreate $(containers_from_names $*)
+  exit_with_success
+
+
+# Start docker-compose up with additional commands given the mode
+elif [[ "$CMD" == "start" ]]; then
+  cd $ROOT_PATH
+  bash scripts/start_$COMPOSITION.sh $(containers_from_names $*)
+  exit_with_success
+
+
+# Stop development containers
+elif [[ "$CMD" == "stop" ]]; then
+  cd $ROOT_PATH
+  docker-compose -f docker-compose.$COMPOSITION.yml stop $(containers_from_names $*)
+  exit_with_success
+
+
+# Start docker-compose up with adapted env variables or webapps with local env
+elif [[ "$CMD" == "up" ]]; then
+  docker-compose -f docker-compose.$COMPOSITION.yml up $(containers_from_names $*);
+  exit_with_success
+
+
+# =============================================
+# Deploy commands
+# =============================================
+
+
+# Deploy all components using main repo
+elif [[ "$CMD" == "deploy" ]]; then
+  ensure_remote "Deploy cannot be run on the local environment. Use (for example) \"$COMMAND_NAME -e staging -t X.Y.Z "$CMD"\"."
+
+  if [[ "$TAG" == 'not-set' ]]; then
+    latest_tag=`git tag --list | grep '^v' | sort --version-sort | tail -n 1 | sed -e 's/^v//'`
+    confirm "No tag specified: deploy latest ($latest_tag) ?"
+    TAG="$latest_tag"
+  fi
+
+  echo "$TAG will be deployed to $ENV"
+  cd $ROOT_PATH
+  update_branch $ENV
+
+  if [[ ! -z $(git ls-remote --tags origin refs/tags/v"$TAG") ]]; then
+    git checkout "v$TAG"
+  else
+    git checkout "$CURRENT_BRANCH"
+    exit_with_error "You need to specify an existing remote tag to deploy"
+  fi
+
+  commit_to_deploy=$(git log -n 1 --pretty=format:%H)
+  if [[ "$ENV" == "production" ]]; then
+    confirm "Warning: code will be deployed to production. Are you sure ?"
+    update_branch staging
+    staging_commit=$(git log -n 1 --pretty=format:%H staging)
+    if [[ "$staging_commit" != "$commit_to_deploy" ]]; then
+      git checkout "$CURRENT_BRANCH"
+      exit_with_error "Can only deploy in production commits that are also deployed in staging"
+    fi
+  fi
+
+  git push -f origin HEAD:"$ENV"
+  git checkout "$CURRENT_BRANCH"
+  function follow_deployment() {
+    scalingo -a $1 deployment-follow | grep -B10000 -m1 'osc-fr1.scalingo.io' | sed -e "s/^/[$1] /" &
+  }
+  follow_deployment $APP_NAME-api-$ENV
+  wait
+  exit_with_success
+
+
+# Tag new version using main repo
+elif [[ "$CMD" == "tag" ]]; then
+  git fetch
+
+  if [[ "$TAG" == "not-set" ]]; then
+    latest_tag=`git tag --list | grep '^v' | sort --version-sort | tail -n 1 | sed -e 's/^v//'`
+    incremented_tag=`echo "$latest_tag" | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}'`
+    confirm "No tag specified: use $incremented_tag (previous version was $latest_tag) ?"
+    TAG="$incremented_tag"
+  fi
+  TAG_VERSION="v$TAG"
+
+  if $(git tag --list | grep -q $TAG_VERSION); then
+    exit_with_error "$TAG already exists."
+  fi
+
+  cd "$ROOT_PATH"/api
+  echo "$TAG_VERSION" > version.txt
+
+  cd "$ROOT_PATH"
+  git add api/version.txt
+
+  cd "$ROOT_PATH"/webapp
+  yarn version --new-version "$TAG"
+  cd -
+
+  git commit -m "🚀 $TAG_VERSION"
+  git push origin master
+  git push origin "$TAG_VERSION"
+
+  echo "New version tagged : $TAG"
+
+  git checkout "$CURRENT_BRANCH"
+  exit_with_success
+
+
+# Display the current version tag
+elif [[ "$CMD" == "version" ]]; then
+  cat "$ROOT_PATH/api/version.txt"
+  exit_with_success
+
+
+# =============================================
+# Initialization commands
+# =============================================
+
+# Install new local environment
+elif [[ "$CMD" == "install" ]]; then
+  if [[ "$PLATFORM" == "localhost" ]]; then
+    cd $ROOT_PATH/webapp
+  	yarn
+  elif [[ "$PLATFORM" == "SSL" ]]; then
+    cd $ROOT_PATH
+    echo "### Transfer install file into the server..."
+    scp $ROOT_PATH/scripts/SSL/install_init.sh $SSL_LOGIN:/home/$SSL_USER
+    scp $ROOT_PATH/.env.${PLATFORM}.${ENV} $SSL_LOGIN:/home/${SSL_USER}/.env
+    echo
+    echo "### Write install file..."
+    SCRIPT="
+      #!/usr/bin/env bash
+      cd /home/$SSL_USER;
+      chmod +x ./install_init.sh;
+      ./install_init.sh;
+      echo \"### Clone repository...\";
+      rm -rf $APP_NAME-main;
+      git clone -b $ENV https://$REPOSITORIES_NAME.com/${MAIN_REPOSITORY_SLUG}/$APP_NAME;
+      echo;
+      cd /home/$SSL_USER/$APP_NAME-main;
+      mv /home/$SSL_USER/.env /home/$SSL_USER/$APP_NAME-main;
+      bash ./scripts/SSL/install_dockercompose.sh;
+      bash ./scripts/SSL/install_torchserve.sh;
+      bash ./scripts/SSL/install_letsencrypt.sh;
+    "
+    ssh -t $SSL_LOGIN "
+      rm -f /home/$SSL_USER/install_serve-ssl.sh;
+      echo \"$SCRIPT\" >> /home/$SSL_USER/install_serve-ssl.sh;
+      sudo sh /home/$SSL_USER/install_serve-ssl.sh;
+    "
+  fi
+  exit_with_success
+
+
+# Create symlink to use "$(echo $COMMAND_NAME)" command (admin rights may be needed)
+elif [[ "$CMD" == "symlink" ]]; then
+	cd /usr/local/bin && ln -sf $ROOT_PATH/$COMMAND_NAME $COMMAND_NAME && chmod +x $COMMAND_NAME && chmod +x $ROOT_PATH/$COMMAND_NAME
+  exit_with_success
+
+# =============================================
+# Python Scripts commands
+# =============================================
+
+# Run python scripts from api/scripts
+else
+  INTERACTIVE_COMPOSITION=''
+  if [[ "$CMD" == "python" ]]; then
+    CMD="shell"
+    INTERACTIVE_COMPOSITION='-it'
+  fi
+  if [[ "$ENV" == "not-set" ]]; then
+    check start apiweb
+    if [[ "$ARG" == "interactive" ]]; then
+      INTERACTIVE_COMPOSITION='-it'
+    fi
+    docker exec $INTERACTIVE_COMPOSITION $APIWEB_CONTAINER bash -c "cd /opt/api && PYTHONPATH=. python manager.py $CMD $*"
+  fi
+  exit_with_success
+fi
+
+# =============================================
+# Execute command
+# =============================================
+
+exit_with_error "Did not find a matched command for $CMD"

@@ -1,0 +1,8 @@
+Cython
+numpy==1.19.4
+scipy==1.5.4
+scikit-learn==0.24.0
+sentencepiece==0.1.94
+sentence-transformers==0.4.0
+transformers==4.1.1
+wheel
