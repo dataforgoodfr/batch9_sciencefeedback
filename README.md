@@ -1,17 +1,56 @@
 # batch9_sciencefeedback
 
-## Requirements
+batch9_sciencefeedback is a microservice helpiing to retrieve expert scientists per domain.
+
+
+## API
+
+
+### /scientists
+
+```bash
+curl -X https://nlp.feedback.org/scientists?q=covid
+```
+returns 
+```json
+ [
+   {
+     "id": 1,
+     "firstName": "Michel",
+     "lastName": "Guillemin"
+   },
+   {
+     "id": 2,
+     "firstName": "Valentine",
+     "lastName": "Rebeco"
+   } 
+ ]
+```
+
+
+### /hotclaims?date=05-05-2021
+
+
+## Webapp
+
+<Explain the interface showing the power of the api>
+
+
+## Contributing
+
+
+### Requirements
   docker (https://docs.docker.com/install/)
   docker-compose (https://docs.docker.com/compose/install/#install-compose)
   coreutils (for macosx, via brew)
 
 
-## Run
+### Run
   ```bash
   ./b9sf start
   ```
 
-## Deploy
+### Deploy
   Check if the repo is updated with the last **master**. Then:
   ```bash
   ./b9sf -t I.P.S. tag
@@ -23,21 +62,16 @@
   ```
 `
 
-## Commands
+### Commands
   Several commands are available in api/commands to run some scripts, for e.g. :
   ```bash
-  ./fb humanize 2
+  ./bs9f torchserve 'my cat is a foo'
   ```
-  returns the humanized version of the id 2
-
-  If you want to make it running on a certain env:
-  ```bash
-  ./fb -e staging filter -n user -i1 email,foo@bar.com
-  ```
-  returns the user in the staging database having the foo@bar.com mail.
+  returns the embed bert version of the query
 
 
-## Datascience
+
+### Datascience
   When serve-development is running, you have a jupyter notebook playground at localhost/jupyter
   helping you to import api functions and also play with your favorite libs in order
   to test your datascience proof of concept.
