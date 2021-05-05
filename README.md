@@ -57,7 +57,7 @@ Visit https://nlp.feedback.org/web
   ./b9sf -t I.P.S. tag
   ```
 
-  Do a `git tag` if you want to know the current tag. After having checked that the ci worked, as an example:
+  If you are admin, you can deploy a specific tag to the production branch:
   ```bash
   ./b9sf -e production -t 3.0.1 deploy
   ```
