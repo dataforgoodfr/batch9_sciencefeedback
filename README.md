@@ -61,7 +61,6 @@ Visit https://nlp.feedback.org/web
   ```bash
   ./b9sf -e production -t 3.0.1 deploy
   ```
-`
 
 ### Commands
   Several commands are available in api/commands to run some scripts, for e.g. :
