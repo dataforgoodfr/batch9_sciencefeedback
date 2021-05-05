@@ -28,9 +28,24 @@ returns
 ```
 
 
-### /hotclaims?date=05-05-2021
+### /hotclaims
 
-To Be Written
+```bash
+curl -X https://nlp.feedback.org/hotclaims?date=05-05-2021
+```
+returns 
+```json
+ [
+   {
+     "id": 1,
+     "text": "There is no climate emergency; Ecosystems are thriving and humanity is benefiting from increased carbon dioxide.",
+   },
+   {
+     "id": 2, 
+     "text": "Plugging this device into a car’s fuse box can reduce fuel consumption by at least 35% and up to 75% by converting the car into a hybrid."
+   } 
+ ]
+```
 
 
 ## Webapp
