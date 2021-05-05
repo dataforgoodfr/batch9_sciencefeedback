@@ -1,6 +1,6 @@
 # batch9_sciencefeedback
 
-batch9_sciencefeedback is a microservice helpiing to retrieve expert scientists per domain.
+batch9_sciencefeedback is a microservice helping to retrieve expert scientists per domain.
 
 
 ## API
