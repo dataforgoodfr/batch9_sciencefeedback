@@ -41,9 +41,9 @@ Visit https://nlp.feedback.org/web
 
 
 ### Requirements
-  docker (https://docs.docker.com/install/)
-  docker-compose (https://docs.docker.com/compose/install/#install-compose)
-  coreutils (for macosx, via brew)
+  - docker (https://docs.docker.com/install/)
+  - docker-compose (https://docs.docker.com/compose/install/#install-compose)
+  - coreutils (for macosx, via brew)
 
 
 ### Run
