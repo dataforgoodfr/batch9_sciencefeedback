@@ -30,6 +30,8 @@ returns
 
 ### /hotclaims?date=05-05-2021
 
+To Be Written
+
 
 ## Webapp
 
