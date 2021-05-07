@@ -7,6 +7,6 @@ MOCK_SCIENTISTS = [
 ]
 
 
-@app.route('/scientists')
-def get_scientists():
+@app.route('/researchers')
+def get_researchers():
     return jsonify(MOCK_SCIENTISTS)
