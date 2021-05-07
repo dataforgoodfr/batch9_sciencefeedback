@@ -22,10 +22,12 @@ with open(PICKLES_PATH  / 'neighbor_model.pkl','rb') as handle:
     neighbor_model = pickle.load(handle)
 
 
-def keywords_from(search_query, max_distance, similarity_threshold):
+def keywords_from(search_query,
+                  max_distance=10,
+                  similarity_threshold=0.5):
     vector = tokenize_string(search_query)
-    prelim_kw = preliminary_keywords_from(vector,max_distance)
-    interm_kw = intermediate_keywords_from(prelim_kw,similarity_threshold)
+    prelim_kw = preliminary_keywords_from(vector, max_distance)
+    interm_kw = intermediate_keywords_from(prelim_kw, similarity_threshold)
     final_kw = final_list_keywords_from(interm_kw)
     return final_kw
 
