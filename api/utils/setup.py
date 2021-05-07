@@ -6,8 +6,6 @@
 # pylint: disable=W0612
 # pylint: disable=W0613
 import os
-from sqlalchemy_api_handler import ApiHandler
-from sqlalchemy_api_handler.utils import logger
 
 from routes import import_routes
 from utils.config import IS_APP, \

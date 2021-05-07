@@ -2,7 +2,6 @@ import os
 import json
 import requests
 from requests.auth import HTTPBasicAuth
-from sqlalchemy_api_handler import ApiErrors
 
 from utils.config import COMPOSITION
 
@@ -36,7 +35,4 @@ def vectors_from_sentences(sentences,
         return result['embedding']
 
     error_message = result['error']
-    errors = ApiErrors()
-    errors.add_error('Torchserve error',
-                     'bert neural network processing error : ' + str(error_message))
-    raise errors
+    raise 'Torchserve error' + str(error_message)
