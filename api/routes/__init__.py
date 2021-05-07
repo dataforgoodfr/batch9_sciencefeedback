@@ -1,2 +1,3 @@
 def import_routes():
-        import routes.scientists
+        import routes.keywords
+        import routes.researchers

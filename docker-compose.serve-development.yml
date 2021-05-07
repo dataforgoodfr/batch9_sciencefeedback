@@ -6,6 +6,7 @@ services:
     command: >
       bash -c "set -x;
                cd /opt/api;
+               pip install -r requirements.txt;
                while true; do python app.py; done;"
     container_name: ${APP_NAME}-apiweb-serve-development
     environment: &api_env

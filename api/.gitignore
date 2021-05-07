@@ -60,3 +60,6 @@ instance/
 # Virtualenv
 venv/
 ENV/
+
+# tmp
+tmp/pickles
