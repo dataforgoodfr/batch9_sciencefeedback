@@ -8,9 +8,9 @@ from pathlib import Path
 
 PICKLES_PATH = Path(os.path.dirname(os.path.realpath(__file__))+ '/../tmp/pickles')
 print(os.getcwd())
-with open('./tmp/pickles/keywords_and_vectors_v4.pkl', 'rb') as handle:
-    dict_vectors = pickle.load(handle)
-print('hello')
+
+#with open('./tmp/pickles/keywords_and_vectors_v4.pkl', 'rb') as handle:
+#    dict_vectors = pickle.load(handle)
 '''
 lst_remove = [key for key in dict_vectors.keys() if key=='']
 for elem in lst_remove:
@@ -18,7 +18,7 @@ for elem in lst_remove:
 
 with open('keyword_similarity_v2.pkl', 'rb') as handle:
     dict_simil = pickle.load(handle)
-    
+
 with open('dict_authors_v3.pickle', 'rb') as handle:
     dict_authors = pickle.load(handle)
 
@@ -42,7 +42,7 @@ def get_preliminary_keywords(vector,max_distance=6):
     for distance,pos in zip(twenty_nearest_neighbors[0][0],twenty_nearest_neighbors[1][0]):
         if distance < max_distance:
             preliminary_lst_keywords.append(list(dict_vectors.keys())[pos])
-            
+
     return preliminary_lst_keywords
 
 def get_intermediate_keywords(preliminary_lst_keywords,similarity_threshold=.985):
@@ -87,7 +87,7 @@ def get_scientists(keywords,k):
                 value_scientist += values['Keywords'][keyword]
         top_k_scientists = add_to_lst_scientists(value_scientist,key,top_k_scientists)
     top_k_scientists = sorted(top_k_scientists, key=lambda item: item[1],reverse=True)
-    
+
     for scientist in top_k_scientists:
         scientist.append([elem['Title'] for elem in dict_authors[scientist[0]]['Articles']])
     return top_k_scientists

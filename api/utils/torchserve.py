@@ -15,7 +15,7 @@ HEADERS = {
 }
 
 AUTH = HTTPBasicAuth('infra',
-                     os.environ.get('NLPDATA_INFRA_HTPASSWD'))
+                     os.environ.get('NLP_INFRA_HTPASSWD'))
 
 
 def ping():
