@@ -1,12 +1,8 @@
-from flask import current_app as app, jsonify
+from flask import current_app as app, jsonify, request
 
-
-MOCK_SCIENTISTS = [
-    { 'firstName': 'Michel', 'lastName': 'Guillemin' },
-    { 'firstName': 'Clara', 'lastName': 'Debreuille' }
-]
+from repository.researchers import researchers_from
 
 
 @app.route('/researchers')
 def get_researchers():
-    return jsonify(MOCK_SCIENTISTS)
+    return jsonify(researchers_from(request.args))

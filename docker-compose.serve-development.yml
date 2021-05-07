@@ -24,7 +24,6 @@ services:
       - torchserve_serve-development_nw
     volumes:
       - ./api:/opt/api
-      - /opt/api/tmp
 
   jupyter-serve-development:
     build:
