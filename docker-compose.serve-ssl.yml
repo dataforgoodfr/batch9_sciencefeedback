@@ -1,6 +1,31 @@
 version: '3.2'
 
 services:
+  apiweb-serve-ssl:
+    build: api
+    command: >
+      bash -c "set -x;
+               cd /opt/api;
+               pip install -r requirements.txt;
+               while true; do gunicorn app:FLASK_APP; done;"
+    container_name: ${APP_NAME}-apiweb-serve-development
+    environment: &api_env
+      - APP_NAME=$APP_NAME
+      - COMMAND_NAME=$COMMAND_NAME
+      - COMPOSITION=serve-ssl
+      - FLASK_SECRET=$FLASK_SECRET
+      - MACHINE_ENV=development
+      - NLPDATA_INFRA_HTPASSWD=$SSL_INFRA_HTPASSWD
+      - TLD=$TLD
+      - TORCHSERVE_URL=$TORCHSERVE_URL
+    image: ${APP_NAME}${TLD}/api:1.0
+    networks:
+      - nginx_serve-development_nw
+      - torchserve_serve-development_nw
+    volumes:
+      - ./api:/opt/api
+      - /opt/api/tmp
+
   certbot-serve-ssl:
     container_name: ${APP_NAME}-certbot-serve-ssl
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
