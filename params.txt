@@ -1,5 +1,6 @@
 -a ARG           "<any>"                                      not-set             "an arg value adapted for specific function"
 -c COMPOSITION   "serve-ssl|serve-development"                serve-development   "specify docker compose file to play with"
+-d DATABASE      "apipostgres"                       apipostgres         "specify which db to target"
 -e ENV           "development|production"                     development         "specify environment to target"
 -l LOG           "off|off"                                    on                  "echo exit message or not"
 -s SERVICE       "apiweb|jupyter|nginx|torchserve"            not-set             "specify service you want to use"

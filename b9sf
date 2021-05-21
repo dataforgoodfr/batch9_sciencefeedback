@@ -48,6 +48,7 @@ shift
 APIWEB_CONTAINER=${APP_NAME}-apiweb-$COMPOSITION
 CURRENT_BRANCH=$(git symbolic-ref -q HEAD)
 CURRENT_BRANCH=${CURRENT_BRANCH##refs/heads/}
+POSTGRES_CONTAINER=$APP_NAME-${DATABASE}db-$COMPOSITION
 if [[ "$ENV" == "production" ]]; then
   SSL_SERVER_NAME=${SSL_SUBDOMAIN_NAME}.${SSL_DOMAIN_NAME}.$TLD
 else
@@ -61,8 +62,24 @@ SERVICE_CONTAINER=${APP_NAME}-${SERVICE}-$COMPOSITION
 # Local commands : use Docker
 # =============================================
 
+# Run alembic migration, ex ./$COMMAND_NAME alembic upgrade HEAD
+if [[ "$CMD" == "alembic" ]]; then
+  SUB_COMMANDS=$*
+  if [[ "$ENV" == "development" || "$ENV" == "not-set" ]]; then
+    check start apipostgresdb
+    check start apiweb
+    docker exec $APIWEB_CONTAINER bash -c "cd /opt/api && PYTHONPATH=. alembic $SUB_COMMANDS"
+    if [[ $SUB_COMMANDS =~ ^revision* ]]; then
+      echo "Apply sudo chown the revisions to your $(whoami) user..."
+      sudo chown -R $(whoami) $ROOT_PATH/api/alembic/versions
+      echo "...Done."
+    fi
+    exit_with_success
+  fi
+
+
 # Bash to containers
-if [[ "$CMD" == "bash" ]]; then
+elif [[ "$CMD" == "bash" ]]; then
   SUB_COMMANDS=${*:1}
   ensure_development
   if [[ "$SERVICE" == "not-set" ]]; then
@@ -83,6 +100,39 @@ elif [[ "$CMD" == "build" ]]; then
   exit_with_success
 
 
+# Apply sub command to the databases from tar db files
+elif [[ "$CMD" == "database" ]]; then
+  SUB_CMD=$1
+  shift
+  if [[ "$DATABASE" == "not-set" ]]; then
+    exit_with_error "You need to specify which database shared volume to rm (by -d apipostgres)"
+  fi
+  if [[ "$SUB_CMD" == "rm" ]]; then
+    check stop ${DATABASE}db
+    if [[ "$DATABASE" == "apipostgres" ]]; then
+      check stop apiweb
+    fi
+    sudo rm -rf $ROOT_PATH/docker_data_${COMPOSITION}/${DATABASE}db
+  elif [[ "$SUB_CMD" == "schema" ]]; then
+    check start ${DATABASE}db
+    FILE=schema_$(date +"%Y_%m_%d__%H_%M_%S").sql
+    docker exec $POSTGRES_CONTAINER bash -c "PGPASSWORD=\$POSTGRES_PASSWORD pg_dump -h localhost -d \$POSTGRES_DB -U \$POSTGRES_USER --no-comments --no-owner -N function_schema --no-privileges --schema-only --exclude-table alembic_version --exclude-schema topology --username \$POSTGRES_USER --format p > /var/lib/postgresql/$FILE"
+    sudo sed -i "s/SELECT pg_catalog.set_config('search_path', '', false);/SET search_path = public, pg_catalog;/g" $ROOT_PATH/docker_data_$COMPOSITION/${DATABASE}db/$FILE
+    if [[ "$DATABASE" == "apipostgres" ]]; then
+      sudo mv docker_data_$COMPOSITION/${DATABASE}db/$FILE $ROOT_PATH/api/alembic/versions/sql/$FILE
+      confirm "Warning: remove previous schema_init.sql ?"
+      rm -f $ROOT_PATH/api/alembic/versions/sql/schema_init.sql;
+      mv $ROOT_PATH/api/alembic/versions/sql/$FILE $ROOT_PATH/api/alembic/versions/sql/schema_init.sql
+    fi
+  else
+    check start ${DATABASE}db
+    if [[ "$DATABASE" == "apipostgres" ]]; then
+      check start apiweb
+    fi
+    docker exec $APIWEB_CONTAINER bash -c "cd /opt/api && PYTHONPATH=. python manager.py database $SUB_CMD"
+  fi
+  exit_with_success
+
 # Dump database into pgdump file
 elif [[ "$CMD" == "env" ]]; then
   cat $ROOT_PATH/.env
@@ -97,6 +147,18 @@ elif [[ "$CMD" == "env" ]]; then
 elif [[ "$CMD" == "kill-all-containers" ]]; then
   confirm "Warning: all your docker containers are going to be killed ?"
   docker kill $(docker ps -q)
+  exit_with_success
+
+
+# Connect to Postgresql database in command line
+elif [[ "$CMD" == "psql" ]]; then
+  COLUMNS=${COLUMNS:-''};
+  if [[ "$ENV" == "development" || "$ENV" == "not-set" ]]; then
+    check start ${DATABASE}db
+		docker exec -it $POSTGRES_CONTAINER bash -c "COLUMNS='$COLUMNS' PGPASSWORD=\$POSTGRES_PASSWORD psql -h localhost -U \$POSTGRES_USER \$POSTGRES_DB '$*'"
+  else
+    scalingo -a "$SCALINGO_APP" pgsql-console
+  fi
   exit_with_success
 
 
@@ -302,7 +364,7 @@ else
     CMD="shell"
     INTERACTIVE_COMPOSITION='-it'
   fi
-  if [[ "$ENV" == "development" ]]; then
+  if [[ "$ENV" == "development" || "$ENV" == "not-set" ]]; then
     check start apiweb
     if [[ "$ARG" == "interactive" ]]; then
       INTERACTIVE_COMPOSITION='-it'

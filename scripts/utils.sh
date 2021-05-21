@@ -42,8 +42,10 @@ function containers_from_names {
 
 
 function ensure_development {
-  if [[ "$ENV" != "development" ]] & [[ "$ENV" != "not-set" ]]; then
-    exit_with_error "${1:-can only be executed in development}."
+  if [[ "$ENV" != "development" ]]; then
+    if [[ "$ENV" != "not-set" ]]; then
+      exit_with_error "${1:-can only be executed in development}."
+    fi
   fi
 }
 
