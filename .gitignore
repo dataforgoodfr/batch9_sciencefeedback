@@ -6,3 +6,5 @@ docker_data*
 node_modules
 /.env*
 .idea/
+
+./upload_es/secrets.py
