@@ -7,6 +7,7 @@ import es_utils
 import parse_pubmed_data_utils
 import secrets
 import elasticsearch
+from elasticsearch import helpers
 
 host = "https://search-feedback-yk5vieg43b7y34n27afc7ebbvq.eu-west-3.es.amazonaws.com"
 uname = 'feedback'
@@ -38,7 +39,7 @@ def main(nb_start_doc):
                 print('Bulktimeout error, trying again in 30 secs')
                 time.sleep(30)
                 try:
-                    elasticsearch.helpers.bulk(es,upload_lst)
+                    helpers.bulk(es,upload_lst)
                 except Exception as e:
                     print('NewBulkError, moving on')
                     time.sleep(30)
