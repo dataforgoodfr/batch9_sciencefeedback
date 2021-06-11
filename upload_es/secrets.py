@@ -1,3 +1,3 @@
-uname = 'XXXX'
+uname = 'XXX'
 password = 'XXX'
-host = "XXX"
+host = "https://XXX.com"

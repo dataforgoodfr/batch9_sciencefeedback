@@ -4,6 +4,11 @@ import wget
 import numpy as np
 import time
 import elasticsearch
+from elasticsearch import helpers
+from itertools import zip_longest
+
+def grouper(n, iterable, padvalue=None):
+    return zip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
 
 def add_to_authors_batch(tmp_list_authors,author_subdict):
     tmp_dict = {
@@ -78,49 +83,32 @@ def add_to_author_affils_batch(tmp_list_author_affils,author_subdict,affil):
     tmp_list_author_affils.append(tmp_dict)
     return tmp_list_author_affils
 
-def upload_keyword_info(lst_keywords,article_id,es):
-    for keyword in lst_keywords:
-        tmp_dict = {'_op_type':'index','Articles':[],'biobert_embedding' : np.array([0.0]*768)}
-        try:
-            es.index(index='keywords',body = tmp_dict,id=str(keyword)[:500])
-        except Exception as e:
-            print(e)
-            print('error on keyword indexing, retrying in 30 secs')
-            time.sleep(30)
-            try:
-                es.index(index='keywords',body = tmp_dict,id=str(keyword)[:500])
-            except Exception as e:
-                print(e)
-                print('New Exception when adding keywords')
-                time.sleep(30)
-                continue
+def add_to_keywords_batch(tmp_list_keywords,list_keywords):
+    for keyword in list_keywords:
+        tmp_dict = {'index':{'_op_type':'index','_index':'keywords','_id': str(keyword)[:500]}}
+        tmp_list_keywords.append(tmp_dict)
+        tmp_dict = {'biobert_embedding':[0 for _ in range(768)] , 'Articles':[]}
+        tmp_list_keywords.append(tmp_dict)
+    return tmp_list_keywords
         
-        query = {'script': {'source': 'if (!ctx._source.Articles.contains(params.articleid)){ctx._source.Articles.add(params.articleid)}',
-                'lang': 'painless',
-                'params': {'articleid': article_id}}}
-        try:
-            es.update(index='keywords',id=str(keyword)[:500],body=query)
-        except Exception as e:
-            print(e)
-            print('error on keyword-article linking, retrying in 5 secs')
-            time.sleep(30)
-            try:
-                es.update(index='keywords',id=str(keyword)[:500],body=query)
-            except Exception as e:
-                print(e)
-                print('New Exception when mapping keywords and articles')
-                time.sleep(30)
-                continue
-
-
-
-
-def process_master_dict(master_dict,es):
+def add_to_keywords_articles_batch(tmp_list_keywords_articles,list_keywords,article_id):
+    for keyword in list_keywords:
+        tmp_dict = {'update':{'_index':'keywords','_id':str(keyword)[:500]}}
+        tmp_list_keywords_articles.append(tmp_dict)
+        tmp_dict = {'script': {'source': 'if (!ctx._source.Articles.contains(params.articleid)){ctx._source.Articles.add(params.articleid)}',
+                    'lang': 'painless',
+                    'params': {'articleid': article_id}}}
+        tmp_list_keywords_articles.append(tmp_dict)
+    return tmp_list_keywords_articles
+    
+def process_master_dict(master_dict):
     tmp_list_articles = []
     tmp_list_journals = []
     tmp_list_authors = []
     tmp_list_author_articles = []
     tmp_list_author_affils = []
+    tmp_list_keywords = []
+    tmp_list_keywords_articles = []
 
     counter = 0
     for key,values in master_dict.items():
@@ -129,7 +117,10 @@ def process_master_dict(master_dict,es):
 
         #preprocessing hacks
         if isinstance(values['title'],collections.OrderedDict):
-            values['title'] = values['title']['#text']
+            if '#text' in values['title']:
+                values['title'] = values['title']['#text']
+            else:
+                continue
         if 'ISSNLinking' in values['journal']:
             issn_linking = values['journal']['ISSNLinking']
         else:
@@ -148,10 +139,10 @@ def process_master_dict(master_dict,es):
 
         # upload keywords one by one (cannot be batched for a knn index upload)
         if values['keywords']:
-            upload_keyword_info(values['keywords'],values['pmid'],es)
+            tmp_list_keywords = add_to_keywords_batch(tmp_list_keywords,values['keywords'])
+            tmp_list_keywords_articles = add_to_keywords_articles_batch(tmp_list_keywords_articles,values['keywords'],values['pmid'])
 
-    return tmp_list_articles,tmp_list_journals,tmp_list_authors,tmp_list_author_articles,tmp_list_author_affils
-
+    return tmp_list_articles,tmp_list_journals,tmp_list_authors,tmp_list_author_articles,tmp_list_author_affils,tmp_list_keywords,tmp_list_keywords_articles
 
 def reset_database(es):
     es.indices.delete('articles')
