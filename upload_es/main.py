@@ -11,9 +11,6 @@ from elasticsearch import helpers
 import requests
 import json
 
-host = "https://search-feedback-yk5vieg43b7y34n27afc7ebbvq.eu-west-3.es.amazonaws.com"
-uname = 'feedback'
-password = 'oWwu3B6jWqG;fgS'
 es = elasticsearch.Elasticsearch(secrets.host,http_auth=(secrets.uname,secrets.password),
                                 timeout=30,
                                 max_retries=30,
@@ -58,13 +55,13 @@ def main(nb_start_doc):
                 with open('tmp_dump_batch.json', 'rb') as file:
                     data = file.read()
                 try:
-                    requests.post(host+'/_bulk', headers=headers, data=data, auth=(uname,password),timeout=60)
+                    requests.post(secrets.host+'/_bulk', headers=headers, data=data, auth=(secrets.uname,secrets.password),timeout=60)
                 except Exception as e:
                     print('Exception when uploading keyword bulk',e)
                     print(data[0])
                     time.sleep(30)
                     try:
-                        requests.post(host+'/_bulk', headers=headers, data=data, auth=(uname,password),timeout=60)
+                        requests.post(secrets.host+'/_bulk', headers=headers, data=data, auth=(secrets.uname,secrets.password),timeout=60)
                     except Exception as e:
                         print('Exception when uploading keyword bulk',e)
                         print(data[0])
