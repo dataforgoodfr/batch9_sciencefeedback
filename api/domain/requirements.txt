@@ -1,0 +1,8 @@
+beautifulsoup4==4.9.3
+bs4==0.0.1
+greenlet==1.1.0
+lxml==4.6.3
+playwright==1.12.1
+pyee==8.1.0
+soupsieve==2.2.1
+websockets==9.1
