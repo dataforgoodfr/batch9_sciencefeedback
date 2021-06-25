@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 USER model-server
 
 COPY ./requirements.txt /home/model-server/requirements.txt
-RUN pip install --upgrade pip==21.0.1
+RUN pip install --upgrade pip==21.1.2
 RUN pip install -r /home/model-server/requirements.txt
 
 

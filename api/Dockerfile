@@ -5,7 +5,7 @@ WORKDIR /opt/api
 
 COPY ./requirements.txt /opt/api/requirements.txt
 COPY ./requirements-dev.txt /opt/api/requirements-dev.txt
-RUN pip install --upgrade pip==21.0.1
+RUN pip install --upgrade pip==21.1.2
 RUN pip install -r /opt/api/requirements.txt -r /opt/api/requirements-dev.txt
 
 COPY ./nltk.txt /opt/api/nltk.txt
