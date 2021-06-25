@@ -1,19 +1,6 @@
 version: '3.2'
 
 services:
-  apipostgresdb-serve-development:
-    command: postgres -c logging_collector=on -c log_destination=stderr -c log_min_duration_statement=0 -c log_statement=all -c log_duration=on
-    container_name: ${APP_NAME}-apipostgresdb-serve-development
-    environment:
-      - POSTGRES_DB=${APP_NAME}_apipostgres
-      - POSTGRES_PASSWORD=${APP_NAME}_password
-      - POSTGRES_USER=${APP_NAME}_user
-    image: postgres:12.2
-    networks:
-      - apipostgresdb_serve-development_nw
-    volumes:
-      - "./docker_data_serve-development/apipostgresdb:/var/lib/postgresql"
-
   apiweb-serve-development:
     build: api
     command: >
@@ -36,7 +23,6 @@ services:
       - TORCHSERVE_URL=$TORCHSERVE_URL
     image: ${APP_NAME}${TLD}/api:1.0
     networks:
-      - apipostgresdb_serve-development_nw
       - nginx_serve-development_nw
       - torchserve_serve-development_nw
     volumes:
@@ -91,8 +77,6 @@ services:
 
 
 networks:
-  apipostgresdb_serve-development_nw:
-    driver: bridge
   nginx_serve-development_nw:
     driver: bridge
   torchserve_serve-development_nw:
