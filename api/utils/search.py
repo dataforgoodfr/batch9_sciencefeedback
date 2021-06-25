@@ -14,5 +14,6 @@ def client_from():
                                            timeout=30,
                                            max_retries=30,
                                            retry_on_timeout=True)
+    return None
 
 CLIENT = client_from()
