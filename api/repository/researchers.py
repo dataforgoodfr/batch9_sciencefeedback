@@ -1,6 +1,8 @@
 from domain.researchers import add_article_subdict_to_dict, \
                                enrich_authors_dict, \
                                return_top_k
+from models.researcher import Researcher
+from utils.database import db
 from utils.search import CLIENT
 
 
@@ -73,3 +75,13 @@ def researchers_from(keywords, k):
     authors_dict = enrich_authors_dict(authors_dict,articles_dict)
     authors_dict = convert_journal_ids_to_names(authors_dict)
     return authors_dict
+
+
+def create_or_modify_researcher(datum):
+    researcher = Researcher.query.filter_by(email=datum['email']).first()
+    if not researcher:
+        researcher = Researcher()
+    for (key, value) in datum.items():
+        setattr(researcher, key, value)
+    db.session.add(researcher)
+    return researcher
