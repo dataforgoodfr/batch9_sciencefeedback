@@ -1,8 +1,5 @@
 cd /home/model-server/
 
-torch-model-archiver --model-name stsbrobertabase \
--v 1.0 --serialized-file sentence_model/model.pt \
---handler ./sentence_transformers_handler.py \
---extra-files "sentence_model/config.json,sentence_model/pool.zip,sentence_model/modules.json"
+torch-model-archiver --model-name bert --version 1.0 --serialized-file ./sentence_model/pytorch_model.bin --extra-files "./sentence_model/config.json,./sentence_model/vocab.txt" --handler "./transformers_handler.py"
 
-mv stsbrobertabase.mar model-store/
+mv bert.mar model-store/

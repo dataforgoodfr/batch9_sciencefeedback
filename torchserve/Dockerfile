@@ -22,13 +22,13 @@ RUN pip install -r /home/model-server/requirements.txt
 COPY ./download_model.py /home/model-server/download_model.py
 RUN python /home/model-server/download_model.py
 
-COPY ./sentence_transformers_handler.py /home/model-server/sentence_transformers_handler.py
+COPY ./transformers_handler.py /home/model-server/transformers_handler.py
 COPY ./init_model.sh /home/model-server/init_model.sh
 
-RUN cd sentence_model && zip -r ./model.pt 0_Transformer
-RUN cd sentence_model && zip -r ./pool.zip 1_Pooling
-
 USER root
+RUN ls
+RUN ls sentence_model
+RUN ls model-store
 RUN chmod +x /home/model-server/init_model.sh
 USER model-server
 RUN /home/model-server/init_model.sh

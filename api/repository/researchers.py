@@ -68,7 +68,7 @@ def get_authors_info(authors_dict):
 
 
 def researchers_from(keywords, k):
-    set_articles = get_article_ids(keywords)
+    set_articles = get_article_ids([keywords])
     authors_dict,articles_dict = get_articles_info(set_articles)
     authors_dict = get_authors_info(authors_dict)
     authors_dict = return_top_k(authors_dict,k)

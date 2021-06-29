@@ -72,7 +72,7 @@ services:
       - 80:80
 
   torchserve-serve-development:
-    command: ${TORCHSERVE_CMD:-'torchserve --start --model-store model-store --models stsbrobertabase.mar --ncs'}
+    command: ${TORCHSERVE_CMD:-'torchserve --start --model-store model-store --models bert.mar --ncs'}
     build:
       context: ./torchserve
     container_name: ${APP_NAME}-torchserve-serve-development
@@ -84,6 +84,11 @@ services:
     env_file: .env
     networks:
       - torchserve_serve-development_nw
+    ports:
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+
 
 networks:
   apipostgresdb_serve-development_nw:
