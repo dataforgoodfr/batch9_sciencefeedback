@@ -1,45 +1,24 @@
+html,
+body, #root, .App {
+  height: 100%;
+  background-color: #eaf4ff;
+  color: #1a1a1a;
+}
+
 body {
+  min-height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+  font-family: 'Rubik', "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  width: 300px;
+* {
+  box-sizing: border-box;
 }
 
-.keywords {
-  text-align: left;
-}
-.select-zone {
-  padding: 16px;
-  display: flex;
-  background-color: #eeeeee;
-  flex-wrap: wrap;
-}
-.tag {
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  background-color: black;
-  color: white;
-  margin: 4px;
-  border-radius: 8px;
-}
-
-.tag > button {
-  height: 100%;
-  background: black;
-  border: none;
-  color: white;
-}
-
-.reseachers-list {
-  display: flex;
-  flex-direction: column;
+.searchbar-keywords {
+  padding: 0 20%;
 }
