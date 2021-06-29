@@ -1,0 +1,45 @@
+.searchbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 124px;
+    padding-bottom: 62px;
+}
+
+.searchbar-label {
+    font-size: 36px;
+}
+
+.searchbar-input {
+    width: 100%;
+    margin-top: 37px;
+    border-radius: 33px;
+    box-shadow: 0 2px 18px 0 rgba(27, 133, 255, 0.14);
+    background-color: #ffffff;
+    outline: none;
+    padding:  0 27px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+}
+
+.searchbar-input:focus-within {
+    border: solid 1px #005eff;
+}
+
+.searchbar-input > input {
+    outline: none;
+    border: none;
+    flex: 1;
+    padding: 20px 0 20px 27px;
+    background-color: white;
+}
+
+.searchbar-input > input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active
+{
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+}
+

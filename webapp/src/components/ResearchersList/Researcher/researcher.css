@@ -1,0 +1,112 @@
+.researcher {
+    border-radius: 8px;
+    border: solid 1px #c6d9e8;
+    width: 100%;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+.researcher-info {
+    padding: 20px;
+}
+.researcher-name {
+    font-size: 21px;
+}
+
+.researcher-tag {
+    margin: 20px 0;
+    display: flex;
+}
+
+.researcher-tag div {
+    padding: 6px 14px;
+    border-radius: 16px;
+    margin-right: 16px;
+}
+
+.researcher-tag-articles {
+    background-color: #f4f8fc;
+    color: #506283;
+}
+
+.researcher-tag-score {
+    color: #1a1a1a;
+}
+
+.researcher-affiliation {
+    color: #a8b4c0;
+    margin-bottom: 20px;
+}
+
+
+.researcher-article-list {
+    border-top: solid 1px #c6d9e8;
+    padding: 20px;
+}
+
+.researcher-article-list > :last-child {
+    border: none;
+}
+.researcher-article {
+    border-bottom: solid 1px #c6d9e8;
+    margin-bottom: 15px;
+    padding: 15px 0;
+    font-size: 16px
+}
+
+.researcher-article-title {
+    color: #1a1a1a;
+    font-size: 18px;
+}
+
+.researcher-article-title:visited {
+    color: #1a1a1a;
+}
+
+.researcher-article-date {
+    margin-top: 12px;
+    color: #a8b4c0;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.researcher-article-show-abstract {
+    padding: 6px 22px;
+    border-radius: 16px;
+    border: solid 1px #005eff;
+    color: #005eff;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.researcher-article-show-abstract:hover {
+    color: white;
+    background-color: #005eff;
+}
+
+.researcher-article-newspaper {
+    color: #0a0a0a;
+}
+
+.collapse-button {
+    background-color: transparent;
+    border: none;
+    color: #005eff;
+    cursor: pointer;
+    padding: 0 20px 20px 20px;
+    font-size: 16px;
+}
+.collapse-button:hover {
+    text-decoration: underline;
+}
+
+
+.collapse-content.collapsed {
+    display: none;
+}
+
+.collapsed-content.expanded {
+    display: block;
+}

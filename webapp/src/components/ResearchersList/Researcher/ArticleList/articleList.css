@@ -1,0 +1,30 @@
+.article-list {
+    border-top: solid 1px #c6d9e8;
+    padding: 20px;
+}
+
+.article-list > :last-child {
+    border: none;
+}
+
+
+.collapse-button {
+    background-color: transparent;
+    border: none;
+    color: #005eff;
+    cursor: pointer;
+    padding: 0 20px 20px 20px;
+    font-size: 16px;
+}
+.collapse-button:hover {
+    text-decoration: underline;
+}
+
+
+.collapse-content.collapsed {
+    display: none;
+}
+
+.collapsed-content.expanded {
+    display: block;
+}

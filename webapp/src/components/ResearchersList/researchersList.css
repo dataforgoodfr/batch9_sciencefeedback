@@ -1,0 +1,15 @@
+.researchers-list {
+    padding: 30px 20%;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    font-size: 22px;
+}
+
+.researchers-list-title {
+    margin-bottom: 24px;
+}
+
+.researchers-list-number {
+    font-weight: bold;
+}
