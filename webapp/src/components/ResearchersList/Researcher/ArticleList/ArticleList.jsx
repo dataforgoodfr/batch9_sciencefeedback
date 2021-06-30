@@ -15,7 +15,7 @@ const ArticleList = ({ name, articles }) => {
                 {articles?.map(article =>
                     <Article
                         article={article}
-                        key={`${article?.title}-${name}`}
+                        key={article?.title}
                         name={name}
                     />
                 )}

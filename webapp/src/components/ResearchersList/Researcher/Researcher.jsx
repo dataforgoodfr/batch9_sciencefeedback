@@ -8,7 +8,7 @@ const Researcher = ({ name, data }) => {
     return (
         <div className="researcher">
             <div className="researcher-info">
-                <div className="researcher-name">{name}</div>
+                <div className="researcher-name">{name !== " " ? name : "Uncredited"}</div>
                 <div className="researcher-tag">
                     <div className="researcher-tag-articles">
                         {nbArticle}{' '}{nbArticle > 1 ? 'articles' : 'article'}
