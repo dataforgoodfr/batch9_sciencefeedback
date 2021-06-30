@@ -22,6 +22,14 @@ const Article = ({ article, name }) => {
         setOpen(false)
     }
 
+    const {
+        Abstract: abstract,
+        doi,
+        Journal: journal,
+        PublicationDate: publicationDate,
+        Title: title
+    } = article || {}
+
     return (
         <div className="article">
             <Modal
@@ -57,20 +65,20 @@ const Article = ({ article, name }) => {
                     {name} <button onClick={closeModal}><FiX size={24} /></button>
                 </div>
                 <div className="article-modal-content">
-                    <a className="article-title" rel="noreferrer" target="_blank" href={article.doi}>{article.title}</a>
-                    <div className="article-date">{formatDate(article.publication_date)}
+                    <a className="article-title" rel="noreferrer" target="_blank" href={doi}>{title}</a>
+                    <div className="article-date">{formatDate(publicationDate)}
                     </div>
-                    <div className="article-newspaper">{article.journal}</div>
+                    <div className="article-newspaper">{journal}</div>
 
-                    <div className="article-abstract">{article.abstract}</div>
+                    <div className="article-abstract">{abstract}</div>
                 </div>
             </Modal>
 
-            <a className="article-title" rel="noreferrer" target="_blank" href={article.doi}>AZE{article.title}</a>
-            <div className="article-date">{formatDate(article.publication_date)}
+            <a className="article-title" rel="noreferrer" target="_blank" href={doi}>{title}</a>
+            <div className="article-date">{formatDate(publicationDate)}
                 <button className="article-show-abstract" onClick={openModal}>Show Abstract</button>
             </div>
-            <div className="article-newspaper">{article.journal}</div>
+            <div className="article-newspaper">{journal}</div>
         </div>
 
     );

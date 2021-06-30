@@ -8,7 +8,11 @@ const ResearchersList = ({ data }) => (
     </div>
     {data &&
       Object.keys(data).map((researcher) => (
-          <Researcher name={researcher} data={data[researcher]} />
+          <Researcher
+            data={data[researcher]}
+            key={researcher}
+            name={researcher}
+          />
       ))}
   </div>
 );

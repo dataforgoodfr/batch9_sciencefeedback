@@ -12,8 +12,12 @@ const ArticleList = ({ name, articles }) => {
                 aria-expanded={isCollapsed}
             >
                 Articles
-                {articles.map(article =>
-                    <Article article={article} name={name} />
+                {articles?.map(article =>
+                    <Article
+                        article={article}
+                        key={`${article?.title}-${name}`}
+                        name={name}
+                    />
                 )}
             </div>
 

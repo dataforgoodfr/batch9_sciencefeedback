@@ -7,8 +7,8 @@ import ResearchersList from "./components/ResearchersList";
 import Header from "./components/Header";
 
 function App() {
-    const { data: keywordsData, fetchKeywords } = useKeywords();
-    const { data: researchersData, fetchResearchers } = useResearchers();
+    const { data: keywordsData, error: keywordsError, fetchKeywords, isLoading: isLoadingKeywords } = useKeywords();
+    const { data: researchersData, error: researchersError, fetchResearchers, isLoading: isLoadingResearchers } = useResearchers();
 
     const onSearchBarSubmit = async (data) => {
         fetchKeywords(data)
@@ -24,12 +24,17 @@ function App() {
 
             <div className="searchbar-keywords">
                 <SearchBar onSubmit={onSearchBarSubmit} />
-
-                {keywordsData && (
+                { isLoadingKeywords && !keywordsError && <div className="text-center">Loading keywords...</div> }
+                { keywordsError && <div className="text-center">Error loading keywords</div> }
+                { keywordsData && (
                     <Keywords data={keywordsData} onSubmit={onKeywordsSubmit} />
-                )}
+                ) }
             </div>
-            {researchersData && <ResearchersList data={researchersData} />}
+
+            { isLoadingResearchers && !researchersError && <div className="text-center">Loading researchers...</div> }
+            { researchersError && <div className="text-center">Error loading researchers</div> }
+            { keywordsData && researchersData && <ResearchersList data={researchersData} /> }
+
         </div>
     );
 }

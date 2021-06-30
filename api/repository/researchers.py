@@ -24,9 +24,13 @@ def convert_journal_ids_to_names(authors_dict):
 def get_article_ids(lst_keywords):
     set_articles = set()
     res = CLIENT.mget(body={"ids" : lst_keywords}, index='copy-keywords')
-    for keyword in res['docs']:
-        for article in keyword['_source']['Articles']:
-            set_articles.update([article])
+    try:
+        for keyword in res['docs']:
+            for article in keyword['_source']['Articles']:
+                set_articles.update([article])
+    except Exception as ex:
+        print('Exception: ', ex)
+        print('DOCS', res['docs'])
     return set_articles
 
 
@@ -68,7 +72,8 @@ def get_authors_info(authors_dict):
 
 
 def researchers_from(keywords, k):
-    set_articles = get_article_ids([keywords])
+    lst_keywords = keywords.split(',')
+    set_articles = get_article_ids(lst_keywords)
     authors_dict,articles_dict = get_articles_info(set_articles)
     authors_dict = get_authors_info(authors_dict)
     authors_dict = return_top_k(authors_dict,k)
