@@ -1,4 +1,6 @@
+# pylint: disable=C0415
+# pylint: disable=W0611
+
 def import_routes():
-        import routes.checks
-        import routes.keywords
-        import routes.researchers
+    import routes.keywords
+    import routes.researchers
