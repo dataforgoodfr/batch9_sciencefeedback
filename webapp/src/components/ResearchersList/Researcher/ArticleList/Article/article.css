@@ -1,0 +1,68 @@
+.article {
+    border-bottom: solid 1px #c6d9e8;
+    margin-bottom: 15px;
+    padding: 15px 0;
+    font-size: 16px
+}
+
+.article-title {
+    color: #1a1a1a;
+    font-size: 18px;
+}
+
+.article-title:visited {
+    color: #1a1a1a;
+}
+
+.article-date {
+    margin-top: 12px;
+    color: #a8b4c0;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.article-show-abstract {
+    padding: 6px 22px;
+    border-radius: 16px;
+    border: solid 1px #005eff;
+    color: #005eff;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.article-show-abstract:hover {
+    color: white;
+    background-color: #005eff;
+}
+
+.article-newspaper {
+    color: #0a0a0a;
+}
+
+.article-abstract {
+    margin-top: 24px;
+}
+
+.article-modal-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: solid 1px #d9e6f7;
+    padding: 37px 20px 23px;
+    font-size: 21px;
+    align-items: center;
+}
+
+.article-modal-header button {
+    border: none;
+    background-color: transparent;
+}
+
+.article-modal-content {
+    padding: 25px;
+    font-size: 16px
+}
+.ReactModal__Body--open {
+    overflow: hidden;
+}

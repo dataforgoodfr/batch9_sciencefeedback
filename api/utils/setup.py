@@ -7,15 +7,18 @@
 # pylint: disable=W0613
 import os
 
+from flask_cors import CORS
 from models import import_models
 from routes import import_routes
 from utils.config import IS_APP, \
-                         IS_DEVELOPMENT
+                         IS_DEVELOPMENT, \
+                         WEBAPP_URL
 from utils.database import db, POSTGRES_URL
 from utils.nltk import import_nltk
 
 
 def setup(flask_app,
+          with_cors=True,
           with_debug=False,
           with_routes=False,
           with_track_modifications=False):
@@ -39,6 +42,11 @@ def setup(flask_app,
             db.session.remove()
         except AttributeError:
             pass
+
+    if with_cors:
+        cors = CORS(flask_app,
+                    resources={r"/*": {"origins": WEBAPP_URL}},
+                    supports_credentials=True)
 
     flask_app.app_context().push()
     import_models()

@@ -10,7 +10,7 @@ class Researcher(db.Model):
                    nullable=False,
                    unique=True)
 
-    firtName = Column(String(128))
+    firstName = Column(String(128))
 
     lastName = Column(String(128))
 
